@@ -10,19 +10,22 @@
 #include <fstream>
 #include <strstream>
 #include <algorithm>
+#include <string>
 
 using namespace std;
 
-const int sWidth = 1920;
-const int sHeight = 1080;
+#define KEY_SEEN 1
+#define KEY_RELEASED 2
 
-const float setFps = 120.0;
-
+// defaults
+int sWidth = 1920;
+int sHeight = 1080;
+float setFps = 60.0;
 bool debug = false;
 
 struct vec3d
 {
-	float x = 0;
+    float x = 0;
     float y = 0;
     float z = 0;
     float w = 1;
@@ -229,9 +232,28 @@ int main(int argc, char *argv[])
 {
     if (argc > 1)
     {
-        if (strcmp(argv[1], "-debug") == 0)
+        for (int x = 1; x < argc; x++)
         {
-            debug = true;
+            //Debug
+            if (strcmp(argv[x], "-debug") == 0)
+            {
+                debug = true;
+            }
+
+            if (strcmp(argv[x], "-width") == 0)
+            {
+                sWidth = std::stoi(argv[x + 1]);
+            }
+
+            if (strcmp(argv[x], "-height") == 0)
+            {
+                sHeight = std::stoi(argv[x + 1]);
+            }
+
+            if (strcmp(argv[x], "-fps") == 0)
+            {
+                setFps = std::stoi(argv[x + 1]);
+            }
         }
     }
 
@@ -260,8 +282,9 @@ int main(int argc, char *argv[])
         printf("couldn't initialize queue\n");
         return 1;
     }
-    
-    al_set_new_display_option(ALLEGRO_VSYNC, 2, ALLEGRO_SUGGEST);
+
+    //al_set_new_display_option(ALLEGRO_VSYNC, 2, ALLEGRO_SUGGEST);
+    //al_set_new_display_refresh_rate((int)setFps);
     ALLEGRO_DISPLAY *disp = al_create_display(sWidth, sHeight);
     if (!disp)
     {
@@ -271,10 +294,16 @@ int main(int argc, char *argv[])
 
     al_init_font_addon();
     al_init_ttf_addon();
-    ALLEGRO_FONT *font = al_load_ttf_font("OpenSans-Regular.ttf", 32, 0);//al_create_builtin_font();
+    ALLEGRO_FONT *font = al_load_ttf_font("OpenSans-Regular.ttf", 32, 0); //al_create_builtin_font();
     if (!font)
     {
         printf("couldn't initialize font\n");
+        return 1;
+    }
+
+    if (!al_init_primitives_addon())
+    {
+        printf("couldn't initialize primitives\n");
         return 1;
     }
 
@@ -294,10 +323,6 @@ int main(int argc, char *argv[])
     float fTheta;
     float zPos = 3.0f;
     vec3d vCamera;
-
-#define KEY_SEEN 1
-#define KEY_RELEASED 2
-
     unsigned char key[ALLEGRO_KEY_MAX];
     memset(key, 0, sizeof(key));
 
@@ -305,10 +330,6 @@ int main(int argc, char *argv[])
     double old_time = al_get_time();
     while (1)
     {
-        double new_time = al_get_time();
-        double elapsed_time = new_time - old_time;
-        float fps = 1.0f / elapsed_time;
-        old_time = new_time;
         mat4x4 matRotZ, matRotX;
         al_wait_for_event(queue, &event);
 
@@ -345,12 +366,20 @@ int main(int argc, char *argv[])
 
         if (redraw && al_is_event_queue_empty(queue))
         {
+            // get the fps
+            double new_time = al_get_time();
+            double elapsed_time = new_time - old_time;
+            float fps = 1.0f / elapsed_time;
+            old_time = new_time;
+
+            // black the screen
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Fps: %f", fps);
+            // draw the fps
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Fps: %i", (int)fps);
 
-            fTheta += 1.0f / setFps;//60.0f;
-
+            // keep the rotation the same regardless of fps
+            fTheta += 1.0f / setFps;
             matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
             matRotX = Matrix_MakeRotationX(fTheta);
 
@@ -384,7 +413,7 @@ int main(int argc, char *argv[])
                 if (Vector_DotProduct(normal, vCameraRay) < 0.0f)
                 {
                     // lighting
-                    vec3d light_direction = { 0.0f, 1.0f, -1.0f };
+                    vec3d light_direction = {0.0f, 1.0f, -1.0f};
                     light_direction = Vector_Normalise(light_direction);
 
                     float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
@@ -399,18 +428,18 @@ int main(int argc, char *argv[])
                     triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
 
                     // X/Y are inverted so put them back
-					triProjected.p[0].x *= -1.0f;
-					triProjected.p[1].x *= -1.0f;
-					triProjected.p[2].x *= -1.0f;
-					triProjected.p[0].y *= -1.0f;
-					triProjected.p[1].y *= -1.0f;
-					triProjected.p[2].y *= -1.0f;
+                    triProjected.p[0].x *= -1.0f;
+                    triProjected.p[1].x *= -1.0f;
+                    triProjected.p[2].x *= -1.0f;
+                    triProjected.p[0].y *= -1.0f;
+                    triProjected.p[1].y *= -1.0f;
+                    triProjected.p[2].y *= -1.0f;
 
-					// Offset verts into visible normalised space
-					vec3d vOffsetView = { 1,1,0 };
-					triProjected.p[0] = Vector_Add(triProjected.p[0], vOffsetView);
-					triProjected.p[1] = Vector_Add(triProjected.p[1], vOffsetView);
-					triProjected.p[2] = Vector_Add(triProjected.p[2], vOffsetView);
+                    // Offset verts into visible normalised space
+                    vec3d vOffsetView = {1, 1, 0};
+                    triProjected.p[0] = Vector_Add(triProjected.p[0], vOffsetView);
+                    triProjected.p[1] = Vector_Add(triProjected.p[1], vOffsetView);
+                    triProjected.p[2] = Vector_Add(triProjected.p[2], vOffsetView);
 
                     triProjected.p[0].x *= 0.5f * (float)sWidth;
                     triProjected.p[0].y *= 0.5f * (float)sHeight;
@@ -427,11 +456,12 @@ int main(int argc, char *argv[])
                 }
             }
 
-            sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle &t1, triangle &t2) {
-                float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
-                float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
-                return z1 > z2;
-            });
+            sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle &t1, triangle &t2)
+                 {
+                     float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+                     float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+                     return z1 > z2;
+                 });
 
             for (auto &triProjected : vecTrianglesToRaster)
             {
@@ -457,6 +487,9 @@ int main(int argc, char *argv[])
     al_destroy_font(font);
     al_destroy_display(disp);
     al_destroy_timer(timer);
+    al_shutdown_primitives_addon();
+    al_shutdown_font_addon();
+    al_shutdown_ttf_addon();
     al_destroy_event_queue(queue);
 
     return 0;
