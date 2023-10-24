@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 
     al_init_font_addon();
     al_init_ttf_addon();
-    ALLEGRO_FONT *font = al_load_ttf_font("OpenSans-Regular.ttf", 32, 0); //al_create_builtin_font();
+    ALLEGRO_FONT *font = al_load_ttf_font("../OpenSans-Regular.ttf", 32, 0); //al_create_builtin_font();
     if (!font)
     {
         printf("couldn't initialize font\n");
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
     ALLEGRO_EVENT event;
 
     mesh meshCube;
-    meshCube.LoadFromObjectFile("teapot.obj");
+    meshCube.LoadFromObjectFile("../teapot.obj");
 
     mat4x4 matProj = Matrix_MakeProjection(90.0f, (float)sHeight / (float)sWidth, 0.1f, 1000.0f);
 
