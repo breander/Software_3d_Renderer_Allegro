@@ -177,7 +177,10 @@ mat4x4 Matrix_MultiplyMatrix(mat4x4 &m1, mat4x4 &m2)
     mat4x4 matrix;
     for (int c = 0; c < 4; c++)
         for (int r = 0; r < 4; r++)
-            matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
+            matrix.m[r][c] = (m1.m[r][0] * m2.m[0][c]) + 
+                             (m1.m[r][1] * m2.m[1][c]) + 
+                             (m1.m[r][2] * m2.m[2][c]) + 
+                             (m1.m[r][3] * m2.m[3][c]);
     return matrix;
 }
 
@@ -318,10 +321,12 @@ int main(int argc, char *argv[])
     mesh meshCube;
     meshCube.LoadFromObjectFile("../teapot.obj");
 
-    mat4x4 matProj = Matrix_MakeProjection(90.0f, (float)sHeight / (float)sWidth, 0.1f, 1000.0f);
+    mat4x4 matProj = Matrix_MakeProjection(60.0f, (float)sHeight / (float)sWidth, 0.1f, 1000.0f);
 
     float fTheta;
     float zPos = 3.0f;
+    float xPos = 0.0f;
+    float yPos = 0.0f;
     vec3d vCamera;
     unsigned char key[ALLEGRO_KEY_MAX];
     memset(key, 0, sizeof(key));
@@ -331,6 +336,7 @@ int main(int argc, char *argv[])
     while (1)
     {
         mat4x4 matRotZ, matRotX;
+        int refresh = 10, count = 0;
         al_wait_for_event(queue, &event);
 
         switch (event.type)
@@ -340,6 +346,16 @@ int main(int argc, char *argv[])
                 zPos -= 0.05f;
             if (key[ALLEGRO_KEY_DOWN])
                 zPos += 0.05f;
+
+            if (key[ALLEGRO_KEY_LEFT])
+                xPos -= 0.05f;
+            if (key[ALLEGRO_KEY_RIGHT])
+                xPos += 0.05f;
+
+            if (key[ALLEGRO_KEY_S])
+                yPos -= 0.05f;
+            if (key[ALLEGRO_KEY_W])
+                yPos += 0.05f;
 
             if (key[ALLEGRO_KEY_ESCAPE])
                 done = true;
@@ -376,19 +392,19 @@ int main(int argc, char *argv[])
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
             // draw the fps
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Fps: %i", (int)fps);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Fps: %i Render: %d", (int)fps, elapsed_time);
 
             // keep the rotation the same regardless of fps
             fTheta += 1.0f / setFps;
-            matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
-            matRotX = Matrix_MakeRotationX(fTheta);
+            //matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
+            //matRotX = Matrix_MakeRotationX(fTheta);
 
             mat4x4 matTrans;
-            matTrans = Matrix_MakeTranslation(0.0f, 0.0f, zPos);
+            matTrans = Matrix_MakeTranslation(xPos, yPos, zPos);
 
             mat4x4 matWorld;
             matWorld = Matrix_MakeIdentify();
-            matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);
+            //matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);
             matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);
 
             vector<triangle> vecTrianglesToRaster;
