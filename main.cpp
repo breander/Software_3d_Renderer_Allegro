@@ -8,9 +8,9 @@
 #include <list>
 #include <math.h>
 #include <fstream>
-#include <strstream>
 #include <algorithm>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -55,7 +55,7 @@ struct mesh
             char line[128];
             f.getline(line, 128);
 
-            strstream s;
+            std::stringstream s;
             s << line;
 
             char junk;
