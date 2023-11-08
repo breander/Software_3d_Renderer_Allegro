@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
             // draw the fps
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Fps: %i Render: %d", (int)fps, elapsed_time);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "Fps: %i Render: %f", (int)fps, elapsed_time);
 
             // keep the rotation the same regardless of fps
             fTheta += 1.0f / setFps;
